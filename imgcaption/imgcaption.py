@@ -1,4 +1,5 @@
 import json
+import logging
 import mimetypes
 import os
 
@@ -6,6 +7,7 @@ import requests
 from six.moves.urllib.parse import urljoin
 
 CAPTIONBOT_API = 'https://www.captionbot.ai/api/'
+logger = logging.getLogger('imgcaption')
 
 
 class API(object):
@@ -13,12 +15,13 @@ class API(object):
         self.session = requests.Session()
         self.watermark = ''
         self.conversation_id = self._make_api_request('init')
+        logger.info('ConversationId: %s', self.conversation_id)
 
     def _make_api_request(self, endpoint, method='GET', **kwargs):
         res = self.session.request(method,
                                    urljoin(CAPTIONBOT_API, endpoint),
                                    **kwargs)
-        print(res.json())
+        logger.debug('Response from API: %s', res.text)
         return res.json()
 
     def _send_message(self, message):
@@ -42,6 +45,7 @@ class API(object):
     def get_file_caption(self, fp, filename):
         mime_type, _ = mimetypes.guess_type(filename)
         files = {'file': (os.path.basename(filename), fp, mime_type)}
+        logger.info('Uploading file: %s', filename)
         img_url = self._make_api_request('upload', method='POST', files=files)
         return self.get_url_caption(img_url)
 
